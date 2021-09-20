@@ -7,12 +7,12 @@ data = {
     'Хлеб': {'Б': 8.8, 'Ж': 3.3, 'У':  46.7},
     'Помидор': {'Б': 1.1,  'Ж': 0.2, 'У': 3.8},
     'Молочный коктейль': {'Б': 6, 'Ж': 5, 'У': 45},
-    'Огурец': {'Б': 0.8, 'Ж': 0.1, 'У': 2.5},
+    'Огурец': {'Б':     0.8, 'Ж': 0.1, 'У': 2.5},
 }
 
 
 # Макронутриенты (БЖУ), которые нужно получить
-neaded = {'Б': 30, 'Ж': 25, 'У': 60}
+needed = {'Б': 30, 'Ж': 25, 'У': 60}
 
 # Минимум 10 гр. надо съесть, иначе может посчитать с нулями
 # Можно задать для каждого продукта отдельно
@@ -27,17 +27,16 @@ food = pl.LpVariable.dicts('Food', data, MIN, MAX)
 for nutrient in list('БЖУ'):
     # Для бел., жиров и угл. создаем условия
     prob += pl.lpSum([data[k][nutrient] * food[k]
-                      for k in data]) == neaded[nutrient]
+                      for k in data]) == needed[nutrient]
 
 prob.writeLP("Nutrients.lp")
 prob.solve()
 
-# Нельзя съесть -минус 10 гр. огурцов. Значит решения нет, если есть хоть 1
-# отрицательное значение
+# Нельзя съесть -минус 10 гр. огурцов. Значит решения нет.
 if any((v.varValue or 0) < 0 for v in prob.variables()) is False:
     for v in prob.variables():
         if not v.varValue:
             continue
         name = v.name.replace('Food_', '')
-        weight = int(v.varValue*100)
+        weight = round(v.varValue*100)
         print(f'{name}: {weight} гр.')
